@@ -1,45 +1,71 @@
 package models;
 
+import data.CharmTemplates;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ResultLogic {
 
-    private static HashMap<String, String> charmMap = new HashMap<>();
-
-    static {
-        // Special predefined charms
-        charmMap.put("Aries-ENFP-Fire-Energetic", "phoenix.png");
-        charmMap.put("Pisces-INFJ-Water-Calm", "aqua_spirit.png");
-        charmMap.put("Leo-ENTJ-Fire-Bold", "sun_lion.png");
-        charmMap.put("Virgo-ISTJ-Earth-Calm", "forest_guardian.png");
+    /**
+     * Generate a single charm based on UserAnswer (for backward compatibility).
+     */
+    public static Charm generateCharm(UserAnswer answers) {
+        List<Charm> charms = generateCharms(answers);
+        return charms.isEmpty() ? null : charms.get(0);
     }
 
-    public static String generateCharm(UserAnswer ans) {
+    /**
+     * Generate up to 5 charms based on the user's answers.
+     */
+    public static ArrayList<Charm> generateCharms(UserAnswer answers) {
+        ArrayList<Charm> result = new ArrayList<>();
 
-        String key = ans.getZodiac() + "-" +
-                     ans.getMbti() + "-" +
-                     ans.getElement() + "-" +
-                     ans.getMood();
+        // Count occurrences of A-E answers
+        Map<String, Integer> counts = new HashMap<>();
+        String[] allAnswers = {
+                answers.getAnswer1(), answers.getAnswer2(), answers.getAnswer3(),
+                answers.getAnswer4(), answers.getAnswer5(), answers.getAnswer6(),
+                answers.getAnswer7(), answers.getAnswer8(), answers.getAnswer9(),
+                answers.getAnswer10()
+        };
 
-        // If exact match exists
-        if (charmMap.containsKey(key)) {
-            return charmMap.get(key);
+        for (String ans : allAnswers) {
+            if (!ans.isEmpty()) {
+                counts.put(ans, counts.getOrDefault(ans, 0) + 1);
+            }
         }
 
-        // Fallback → auto-generate unique charm
-        return autoGenerateCharm(ans);
-    }
+        // Sort answers by frequency (most selected first)
+        List<Map.Entry<String, Integer>> sorted = new ArrayList<>(counts.entrySet());
+        sorted.sort((a, b) -> b.getValue() - a.getValue());
 
-    private static String autoGenerateCharm(UserAnswer ans) {
+        // Fetch predefined charms
+        List<Charm> allCharms = CharmTemplates.getAllCharms();
+        int charmIndex = 0;
 
-        // Example: ar-en-f-b.png
-        String fileName =
-                ans.getZodiac().substring(0, 2).toLowerCase() +
-                ans.getMbti().substring(0, 2).toLowerCase() +
-                ans.getElement().charAt(0) +
-                ans.getMood().charAt(0) +
-                ".png";
+        // Assign charms based on the top answers
+        for (Map.Entry<String, Integer> entry : sorted) {
+            if (charmIndex >= 5) break; // max 5 charms
+            String answerLetter = entry.getKey();
+            // Map A-E to first 5 charms
+            switch (answerLetter) {
+                case "A": result.add(allCharms.get(0)); break;
+                case "B": result.add(allCharms.get(1)); break;
+                case "C": result.add(allCharms.get(2)); break;
+                case "D": result.add(allCharms.get(3)); break;
+                case "E": result.add(allCharms.get(4)); break;
+                default: result.add(allCharms.get(allCharms.size() - 1)); break;
+            }
+            charmIndex++;
+        }
 
-        return fileName;
+        // Fill remaining charms if less than 5
+        while (result.size() < 5 && result.size() < allCharms.size()) {
+            result.add(allCharms.get(result.size()));
+        }
+
+        return result;
     }
 }
