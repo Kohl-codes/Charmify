@@ -17,10 +17,10 @@ public class CharmTemplates {
         charms.add(new Charm("The Dreamy Bubble", "Imaginative, Kind, Ethereal.", "assets/charms/Dreamy-Bubble.png"));
         charms.add(new Charm("The Shy Seashell", "Nurturing, Intuitive, Sentimental.", "assets/charms/Shy-Seashell.png"));
         charms.add(new Charm("The Golden Sun-Lion", "Charismatic, Generous, Dramatic.", "assets/charms/Golden-Sun-Lion.png"));
-        charms.add(new Charm("The Sweet Scales", "Aesthetic, Diplomatic, Romantic.", "assets/charms/Sweet Scales.png"));
-        charms.add(new Charm("The Wandering Arrow", "Adventurous, Optimistic, Blunt.", "assets/charms/Wandering Arrow.png"));
+        charms.add(new Charm("The Sweet Scales", "Aesthetic, Diplomatic, Romantic.", "assets/charms/Sweet-Scales.png"));
+        charms.add(new Charm("The Wandering Arrow", "Adventurous, Optimistic, Blunt.", "assets/charms/Wandering-Arrow.png"));
         charms.add(new Charm("The Tiny Summit", "Ambitious, Disciplined, Dryly Funny.", "assets/charms/Tiny-Summit.png"));
-        charms.add(new Charm("The Cosmic Cloud", "Eccentric, Brilliant, Free-spirited.", "assets/charms/Cosmic Cloud.png"));
+        charms.add(new Charm("The Cosmic Cloud", "Eccentric, Brilliant, Free-spirited.", "assets/charms/Cosmic-Cloud.png"));
 
         return charms;
     }

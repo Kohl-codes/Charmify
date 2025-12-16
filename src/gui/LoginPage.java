@@ -1,8 +1,9 @@
 package gui;
 
-import javax.swing.*;
-import java.awt.*;
 import data.UserData;
+import java.awt.*;
+import java.util.ArrayList;
+import javax.swing.*;
 import models.User;
 
 public class LoginPage extends JFrame {
@@ -79,7 +80,7 @@ public class LoginPage extends JFrame {
 
             if (user != null) {
                 if (user.isAdmin()) {
-                    new AdminDashboard();
+                     new AdminDashboard(new ArrayList<>(UserData.getUsers()));
                 } else {
                     new QuizPage(user);
                 }

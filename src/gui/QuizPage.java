@@ -15,8 +15,8 @@ import models.UserAnswer;
 
 public class QuizPage extends JFrame {
 
-    private User currentUser;
-    private Map<String, ButtonGroup> questionGroups;
+    private final User currentUser;
+    private final Map<String, ButtonGroup> questionGroups;
 
     public QuizPage(User user) {
         this.currentUser = user;
@@ -26,28 +26,31 @@ public class QuizPage extends JFrame {
         setSize(750, 750);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(null);
+        setLayout(new BorderLayout());
+        getContentPane().setBackground(new Color(245, 245, 250));
 
         JLabel title = new JLabel("Charmify Personality Quiz");
-        title.setBounds(0, 10, 750, 40);
         title.setHorizontalAlignment(SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        add(title);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        title.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        add(title, BorderLayout.NORTH);
 
+        // Quiz Panel
         JPanel quizPanel = new JPanel();
         quizPanel.setLayout(new BoxLayout(quizPanel, BoxLayout.Y_AXIS));
+        quizPanel.setBackground(new Color(245, 245, 250));
         JScrollPane scrollPane = new JScrollPane(quizPanel);
-        scrollPane.setBounds(20, 60, 700, 600);
-        add(scrollPane);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        add(scrollPane, BorderLayout.CENTER);
 
-        // Load questions from QuizData
+        // Load questions
         ArrayList<QuizQuestion> questions = QuizData.getAllQuestions();
         int qNumber = 1;
-
         for (QuizQuestion q : questions) {
             String qKey = "q" + qNumber;
 
-            // Add letters A, B, C, etc. to options
+            // Add letters A, B, C… to options
             String[] optionsWithLetters = new String[q.getChoices().length];
             for (int i = 0; i < q.getChoices().length; i++) {
                 char letter = (char) ('A' + i);
@@ -58,13 +61,18 @@ public class QuizPage extends JFrame {
             qNumber++;
         }
 
+        // Finish Button
         JButton finishBtn = new JButton("Finish Quiz");
-        finishBtn.setBounds(250, 670, 200, 40);
-        finishBtn.setBackground(new Color(92, 107, 192));
+        finishBtn.setBackground(new Color(33, 150, 243));
         finishBtn.setForeground(Color.WHITE);
-        finishBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        finishBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
         finishBtn.setFocusPainted(false);
-        add(finishBtn);
+        finishBtn.setPreferredSize(new Dimension(200, 50));
+
+        JPanel btnPanel = new JPanel();
+        btnPanel.setBackground(new Color(245, 245, 250));
+        btnPanel.add(finishBtn);
+        add(btnPanel, BorderLayout.SOUTH);
 
         finishBtn.addActionListener(e -> finishQuiz());
 
@@ -72,11 +80,18 @@ public class QuizPage extends JFrame {
     }
 
     private void addQuestion(JPanel panel, String questionText, String[] options, String qKey) {
+        JPanel questionBox = new JPanel();
+        questionBox.setLayout(new BoxLayout(questionBox, BoxLayout.Y_AXIS));
+        questionBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        questionBox.setBackground(Color.WHITE);
+
         JLabel questionLabel = new JLabel(questionText);
         questionLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        questionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(questionLabel);
+        questionBox.add(questionLabel);
+        questionBox.add(Box.createVerticalStrut(8));
 
         ButtonGroup group = new ButtonGroup();
         questionGroups.put(qKey, group);
@@ -84,21 +99,32 @@ public class QuizPage extends JFrame {
         for (String option : options) {
             JRadioButton btn = new JRadioButton(option);
             btn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-            btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            btn.setBackground(Color.WHITE);
             group.add(btn);
-            panel.add(btn);
+            questionBox.add(btn);
         }
-        panel.add(Box.createVerticalStrut(10));
+
+        questionBox.add(Box.createVerticalStrut(10));
+        panel.add(questionBox);
+        panel.add(Box.createVerticalStrut(12));
     }
 
-    private void finishQuiz() {
-        UserAnswer answers = new UserAnswer();
-
-        // Dynamically set answers based on question order
+   private void finishQuiz() {
+        // Validate all questions are answered
         for (int i = 1; i <= questionGroups.size(); i++) {
-            String qKey = "q" + i;
-            String selected = getSelectedOption(qKey);
+            if (getSelectedOption("q" + i).isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Please answer all questions before finishing the quiz.",
+                        "Incomplete Quiz",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
 
+        // Collect answers
+        UserAnswer answers = new UserAnswer();
+        for (int i = 1; i <= questionGroups.size(); i++) {
+            String selected = getSelectedOption("q" + i);
             switch (i) {
                 case 1: answers.setAnswer1(selected); break;
                 case 2: answers.setAnswer2(selected); break;
@@ -115,30 +141,26 @@ public class QuizPage extends JFrame {
 
         currentUser.setLastQuizAnswer(answers);
 
-        // Generate multiple charms based on answers
-        // You can modify ResultLogic to return List<Charm>
-        ArrayList<Charm> newCharms = ResultLogic.generateCharms(answers); // refactored method
-        for (Charm newCharm : newCharms) {
-            // Check if user already has this charm
-            boolean alreadyHas = false;
-            for (Charm existingCharm : currentUser.getCharms()) {
-                if (existingCharm.getName().equals(newCharm.getName())) {
-                    alreadyHas = true;
-                    break;
-                }
-            }
-            
-            // Only add if not already in collection
-            if (!alreadyHas) {
-                currentUser.addCharm(newCharm);
-            }
+        // CLEAR old charms first
+        currentUser.getCharms().clear();
+
+        // GENERATE new randomized set of charms
+        ArrayList<Charm> newCharms = ResultLogic.generateCharms(answers);
+
+        // Shuffle to make it random
+        java.util.Collections.shuffle(newCharms);
+
+        // Only take first 5 charms
+        for (int i = 0; i < Math.min(5, newCharms.size()); i++) {
+            currentUser.addCharm(newCharms.get(i));
         }
 
-        // Display all charms in bracelet layout
+        // Show bracelet with new charms
         new CharmDisplayPage(currentUser);
-
         dispose();
     }
+
+
 
     private String getSelectedOption(String qKey) {
         ButtonGroup group = questionGroups.get(qKey);
@@ -146,10 +168,10 @@ public class QuizPage extends JFrame {
             for (Enumeration<AbstractButton> buttons = group.getElements(); buttons.hasMoreElements(); ) {
                 AbstractButton button = buttons.nextElement();
                 if (button.isSelected()) {
-                    return button.getText().substring(0, 1); // return letter A-E
+                    return button.getText().substring(0, 1);
                 }
             }
         }
-        return ""; // none selected
+        return "";
     }
 }

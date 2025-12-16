@@ -1,15 +1,12 @@
 package models;
 
 import data.CharmTemplates;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ResultLogic {
 
     /**
-     * Generate a single charm based on UserAnswer (for backward compatibility).
+     * Generate a single charm (for backward compatibility)
      */
     public static Charm generateCharm(UserAnswer answers) {
         List<Charm> charms = generateCharms(answers);
@@ -17,10 +14,15 @@ public class ResultLogic {
     }
 
     /**
-     * Generate up to 5 charms based on the user's answers.
+     * Generate up to 5 unique charms based on user's answers,
+     * randomly shuffled each time.
      */
     public static ArrayList<Charm> generateCharms(UserAnswer answers) {
         ArrayList<Charm> result = new ArrayList<>();
+        List<Charm> allCharms = new ArrayList<>(CharmTemplates.getAllCharms());
+
+        // Shuffle the charm list so it will be random every time
+        Collections.shuffle(allCharms);
 
         // Count occurrences of A-E answers
         Map<String, Integer> counts = new HashMap<>();
@@ -37,35 +39,27 @@ public class ResultLogic {
             }
         }
 
-        // Sort answers by frequency (most selected first)
+        // Sort answers by frequency
         List<Map.Entry<String, Integer>> sorted = new ArrayList<>(counts.entrySet());
         sorted.sort((a, b) -> b.getValue() - a.getValue());
 
-        // Fetch predefined charms
-        List<Charm> allCharms = CharmTemplates.getAllCharms();
-        int charmIndex = 0;
-
-        // Assign charms based on the top answers
+        // Map answers to charms dynamically from shuffled list
+        Set<Charm> selectedCharms = new LinkedHashSet<>(); // ensures uniqueness
+        int index = 0;
         for (Map.Entry<String, Integer> entry : sorted) {
-            if (charmIndex >= 5) break; // max 5 charms
-            String answerLetter = entry.getKey();
-            // Map A-E to first 5 charms
-            switch (answerLetter) {
-                case "A": result.add(allCharms.get(0)); break;
-                case "B": result.add(allCharms.get(1)); break;
-                case "C": result.add(allCharms.get(2)); break;
-                case "D": result.add(allCharms.get(3)); break;
-                case "E": result.add(allCharms.get(4)); break;
-                default: result.add(allCharms.get(allCharms.size() - 1)); break;
-            }
-            charmIndex++;
+            if (index >= allCharms.size()) break;
+            selectedCharms.add(allCharms.get(index));
+            index++;
+            if (selectedCharms.size() >= 5) break;
         }
 
-        // Fill remaining charms if less than 5
-        while (result.size() < 5 && result.size() < allCharms.size()) {
-            result.add(allCharms.get(result.size()));
+        // Fill remaining slots if less than 5
+        while (selectedCharms.size() < 5 && index < allCharms.size()) {
+            selectedCharms.add(allCharms.get(index));
+            index++;
         }
 
+        result.addAll(selectedCharms);
         return result;
     }
 }
