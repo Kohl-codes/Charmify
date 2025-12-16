@@ -118,8 +118,20 @@ public class QuizPage extends JFrame {
         // Generate multiple charms based on answers
         // You can modify ResultLogic to return List<Charm>
         ArrayList<Charm> newCharms = ResultLogic.generateCharms(answers); // refactored method
-        for (Charm c : newCharms) {
-            currentUser.addCharm(c);
+        for (Charm newCharm : newCharms) {
+            // Check if user already has this charm
+            boolean alreadyHas = false;
+            for (Charm existingCharm : currentUser.getCharms()) {
+                if (existingCharm.getName().equals(newCharm.getName())) {
+                    alreadyHas = true;
+                    break;
+                }
+            }
+            
+            // Only add if not already in collection
+            if (!alreadyHas) {
+                currentUser.addCharm(newCharm);
+            }
         }
 
         // Display all charms in bracelet layout
